@@ -25,16 +25,14 @@ async function run() {
     const tuitionsCollection = db.collection("tuitions");
     const usersCollection = db.collection("users");
 
-    app.post("/tuitions", async (req, res) => {
-      const tuitions = req.body;
-      const result = await tuitionsCollection.insertOne(tuitions);
-      res.send(result);
-    });
-
     app.get("/tuitions", async (req, res) => {
-      // const email = req.params
-      // console.log(email)
-      const result = await tuitionsCollection.find().toArray();
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.email = email;
+      }
+
+      const result = await tuitionsCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -43,6 +41,15 @@ async function run() {
       console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await tuitionsCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.post("/tuitions", async (req, res) => {
+      const tuitions = req.body;
+      tuitions.status = "pending";
+      tuitions.applied = Number(0);
+      tuitions.createdAt = new Date();
+      const result = await tuitionsCollection.insertOne(tuitions);
       res.send(result);
     });
 
