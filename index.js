@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -23,6 +23,7 @@ async function run() {
   try {
     const db = client.db("assignment11");
     const tuitionsCollection = db.collection("tuitions");
+    const usersCollection = db.collection("users");
 
     app.post("/tuitions", async (req, res) => {
       const tuitions = req.body;
@@ -31,7 +32,32 @@ async function run() {
     });
 
     app.get("/tuitions", async (req, res) => {
+      // const email = req.params
+      // console.log(email)
       const result = await tuitionsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/tuitions/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const result = await tuitionsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // users related api
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      user.role = "student";
+      user.createdAt = new Date();
+      const existingUser = await usersCollection.findOne({
+        email: user.email,
+      });
+      if (existingUser) {
+        return res.send({ message: "user is already exist" });
+      }
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
