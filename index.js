@@ -47,16 +47,21 @@ async function run() {
     app.post("/tuitions", async (req, res) => {
       const tuitions = req.body;
       tuitions.status = "pending";
-      tuitions.applied = Number(0);
       tuitions.createdAt = new Date();
       const result = await tuitionsCollection.insertOne(tuitions);
       res.send(result);
     });
 
+    app.delete('/tuitions/:id', async (req, res) => {
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await tuitionsCollection.deleteOne(query)
+      res.send(result)
+    })
+
     // users related api
     app.post("/users", async (req, res) => {
       const user = req.body;
-      user.role = "student";
       user.createdAt = new Date();
       const existingUser = await usersCollection.findOne({
         email: user.email,
