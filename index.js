@@ -23,7 +23,22 @@ async function run() {
   try {
     const db = client.db("assignment11");
     const tuitionsCollection = db.collection("tuitions");
+    const applicationsCollection = db.collection('applications')
     const usersCollection = db.collection("users");
+
+    // application related api
+    app.get('/applications', async (req, res) => {
+      const result = await applicationsCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    app.post('/applications', async (req, res) => {
+      const applicationData = req.body
+      console.log(applicationData)
+      const result = await applicationsCollection.insertOne(applicationData)
+      res.send(result)
+    })
 
     app.get("/tuitions", async (req, res) => {
       const email = req.query.email;
@@ -38,7 +53,6 @@ async function run() {
 
     app.get("/tuitions/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await tuitionsCollection.findOne(query);
       res.send(result);
