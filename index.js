@@ -31,7 +31,12 @@ async function run() {
 
     // application related api
     app.get("/applications", async (req, res) => {
-      const result = await applicationsCollection.find().toArray();
+      const email = req.query.email
+      const query = {}
+      if (email) {
+        query.tutorEmail = email
+      }
+      const result = await applicationsCollection.find(query).toArray();
       res.send(result);
     });
 
