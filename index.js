@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const Stripe = require("stripe");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -23,23 +25,24 @@ async function run() {
   try {
     const db = client.db("assignment11");
     const tuitionsCollection = db.collection("tuitions");
-    const applicationsCollection = db.collection('applications')
+    const applicationsCollection = db.collection("applications");
+    const paymentCollection = db.collection("payment");
     const usersCollection = db.collection("users");
 
     // application related api
-    app.get('/applications', async (req, res) => {
-      const result = await applicationsCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/applications", async (req, res) => {
+      const result = await applicationsCollection.find().toArray();
+      res.send(result);
+    });
 
+    app.post("/applications", async (req, res) => {
+      const applicationData = req.body;
+      console.log(applicationData);
+      const result = await applicationsCollection.insertOne(applicationData);
+      res.send(result);
+    });
 
-    app.post('/applications', async (req, res) => {
-      const applicationData = req.body
-      console.log(applicationData)
-      const result = await applicationsCollection.insertOne(applicationData)
-      res.send(result)
-    })
-
+    // tuition related api
     app.get("/tuitions", async (req, res) => {
       const email = req.query.email;
       const query = {};
@@ -66,12 +69,12 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/tuitions/:id', async (req, res) => {
-      const id = req.params.id
-      const query = {_id: new ObjectId(id)}
-      const result = await tuitionsCollection.deleteOne(query)
-      res.send(result)
-    })
+    app.delete("/tuitions/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await tuitionsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // users related api
     app.post("/users", async (req, res) => {
@@ -85,6 +88,81 @@ async function run() {
       }
       const result = await usersCollection.insertOne(user);
       res.send(result);
+    });
+
+    // payment related api
+
+    app.get('/payment', async(req, res) => {
+      const result = await paymentCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    app.post("/create-checkout-session", async (req, res) => {
+      const paymentInfo = req.body;
+      // console.log(paymentInfo);
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: paymentInfo?.tutorName,
+                images: [paymentInfo?.tutorPhoto],
+              },
+              unit_amount: paymentInfo?.expectedSalary * 100,
+            },
+            quantity: 1,
+          },
+        ],
+        customer_email: paymentInfo?.student?.studentEmail,
+        mode: "payment",
+        metadata: {
+          tuitionId: paymentInfo?.tuitionId,
+          applicationId: paymentInfo?.applicationId,
+          student: paymentInfo?.student?.studentEmail,
+        },
+        success_url: `${process.env.CLIENT_URL}/success-url?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.CLIENT_URL}/dashboard/student/applied-tutors`,
+      });
+      res.send({ url: session.url });
+    });
+
+    app.post("/payment-success", async (req, res) => {
+      const { sessionId } = req.body;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      // console.log(session);
+      const tuition = await applicationsCollection.findOne({
+        _id: new ObjectId(session.metadata.applicationId),
+      });
+      const payment = await paymentCollection.findOne({
+        transactionId: session.payment_intent,
+      });
+      // console.log(tuition);
+      if (session.status === "complete" && tuition && !payment) {
+        const successInfo = {
+          tuitionId: session.metadata.tuitionId,
+          transactionId: session.payment_intent,
+          studentEmail: session.customer_email,
+          amount: session.amount_total / 100,
+          tutorName: tuition.tutorName,
+          tutorEmail: tuition.tutorEmail,
+          applicationId: tuition._id,
+          status: "success",
+          paymentAt: new Date(),
+        };
+        // console.log(successInfo);
+        const result = await paymentCollection.insertOne(successInfo);
+        // update tutor status
+        await applicationsCollection.updateOne(
+          { _id: new ObjectId(session.metadata.applicationId) },
+          { $set: { status: "approved" } }
+        );
+        return res.send({
+          transactionId: session.payment_intent,
+          orderId: result.insertedId,
+        });
+      }
     });
 
     // Send a ping to confirm a successful connection
