@@ -42,6 +42,18 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/applications/:id', async (req, res) => {
+      const id = req.params.id
+      const query = {_id:new ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          status:'rejected'
+        }
+      }
+      const result = await applicationsCollection.updateOne(query,updateDoc)
+      res.send(result)
+    })
+
     // tuition related api
     app.get("/tuitions", async (req, res) => {
       const email = req.query.email;
@@ -91,7 +103,6 @@ async function run() {
     });
 
     // payment related api
-
     app.get('/payment', async(req, res) => {
       const result = await paymentCollection.find().toArray()
       res.send(result)
