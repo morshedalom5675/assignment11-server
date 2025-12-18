@@ -107,6 +107,24 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.patch('/users/:id', async (req, res) => {
+      const id = req.params.id
+      const userInfo = req.body
+      const query = {_id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          role: userInfo.role
+        }
+      }
+      const result = await usersCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
     // payment related api
     app.get('/payment', async(req, res) => {
       const result = await paymentCollection.find().toArray()
