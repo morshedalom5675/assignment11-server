@@ -31,10 +31,10 @@ async function run() {
 
     // application related api
     app.get("/applications", async (req, res) => {
-      const email = req.query.email
-      const query = {}
+      const email = req.query.email;
+      const query = {};
       if (email) {
-        query.tutorEmail = email
+        query.tutorEmail = email;
       }
       const result = await applicationsCollection.find(query).toArray();
       res.send(result);
@@ -47,17 +47,17 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/applications/:id', async (req, res) => {
-      const id = req.params.id
-      const query = {_id:new ObjectId(id)}
+    app.patch("/applications/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status:'rejected'
-        }
-      }
-      const result = await applicationsCollection.updateOne(query,updateDoc)
-      res.send(result)
-    })
+          status: "rejected",
+        },
+      };
+      const result = await applicationsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // tuition related api
     app.get("/tuitions", async (req, res) => {
@@ -107,30 +107,48 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users', async (req, res) => {
-      const result = await usersCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/users", async (req, res) => {
+      const searchText = req.query.searchText;
+      const query = {};
+      if (searchText) {
+        query.$or = [
+          { name: { $regex: searchText, $options: "i" } },
+          { email: { $regex: searchText, $options: "i" } },
+        ];
+      }
+      const result = await usersCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .toArray();
+      res.send(result);
+    });
 
-    app.patch('/users/:id', async (req, res) => {
-      const id = req.params.id
-      const userInfo = req.body
-      const query = {_id: new ObjectId(id)}
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const userInfo = req.body;
+      const query = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
-          role: userInfo.role
-        }
-      }
-      const result = await usersCollection.updateOne(query,updatedDoc)
-      res.send(result)
-    })
+          role: userInfo.role,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // payment related api
-    app.get('/payment', async(req, res) => {
-      const result = await paymentCollection.find().toArray()
-      res.send(result)
-    })
-
+    app.get("/payment", async (req, res) => {
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
+    });
 
     app.post("/create-checkout-session", async (req, res) => {
       const paymentInfo = req.body;
