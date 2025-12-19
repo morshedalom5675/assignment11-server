@@ -86,6 +86,18 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/tuitions/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await tuitionsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
     app.delete("/tuitions/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
