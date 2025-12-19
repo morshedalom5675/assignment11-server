@@ -34,7 +34,7 @@ async function run() {
       const email = req.query.email;
       const query = {};
       if (email) {
-        query.tutorEmail = email;
+        query.studentEmail = email;
       }
       const result = await applicationsCollection.find(query).toArray();
       res.send(result);
@@ -67,7 +67,10 @@ async function run() {
         query.email = email;
       }
 
-      const result = await tuitionsCollection.find(query).toArray();
+      const result = await tuitionsCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
       res.send(result);
     });
 
@@ -136,6 +139,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users/:email/role", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await usersCollection.findOne(query)
+      res.send({role: result?.role || 'student'})
+    });
+
     app.patch("/users/:id", async (req, res) => {
       const id = req.params.id;
       const userInfo = req.body;
@@ -158,7 +168,12 @@ async function run() {
 
     // payment related api
     app.get("/payment", async (req, res) => {
-      const result = await paymentCollection.find().toArray();
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.studentEmail = email;
+      }
+      const result = await paymentCollection.find(query).toArray();
       res.send(result);
     });
 
