@@ -40,6 +40,16 @@ async function run() {
       res.send(result);
     });
 
+    // latest issue get
+    app.get("/latest-applications", async (req, res) => {
+      const result = await applicationsCollection
+        .find()
+        .limit(6)
+        .sort({ date: -1 })
+        .toArray();
+      res.send(result);
+    });
+
     app.post("/applications", async (req, res) => {
       const applicationData = req.body;
       console.log(applicationData);
@@ -142,8 +152,8 @@ async function run() {
     app.get("/users/:email/role", async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const result = await usersCollection.findOne(query)
-      res.send({role: result?.role || 'student'})
+      const result = await usersCollection.findOne(query);
+      res.send({ role: result?.role || "student" });
     });
 
     app.patch("/users/:id", async (req, res) => {
