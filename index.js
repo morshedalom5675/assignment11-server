@@ -40,7 +40,7 @@ async function run() {
       res.send(result);
     });
 
-    // latest issue get
+    // latest tutor get
     app.get("/latest-applications", async (req, res) => {
       const result = await applicationsCollection
         .find()
@@ -80,6 +80,16 @@ async function run() {
       const result = await tuitionsCollection
         .find(query)
         .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    // latest issue get
+    app.get("/latest-tuition", async (req, res) => {
+      const result = await tuitionsCollection
+        .find()
+        .limit(6)
+        .sort({ date: -1 })
         .toArray();
       res.send(result);
     });
