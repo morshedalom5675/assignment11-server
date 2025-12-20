@@ -34,7 +34,7 @@ async function run() {
       const email = req.query.email;
       const query = {};
       if (email) {
-        query.studentEmail = email;
+        query.tutorEmail = email;
       }
       const result = await applicationsCollection.find(query).toArray();
       res.send(result);
@@ -84,7 +84,7 @@ async function run() {
       res.send(result);
     });
 
-    // latest issue get
+    // latest tuition get
     app.get("/latest-tuition", async (req, res) => {
       const result = await tuitionsCollection
         .find()
@@ -106,6 +106,43 @@ async function run() {
       tuitions.status = "pending";
       tuitions.createdAt = new Date();
       const result = await tuitionsCollection.insertOne(tuitions);
+      res.send(result);
+    });
+
+    app.patch('/edit-tuitionPost/:id', async(req, res) => {
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const data = req.body
+      const updatedDoc = {
+        $set: {
+          ...data
+        }
+      }
+      const result = await tuitionsCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
+
+    app.patch("/approved-tuition/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await tuitionsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
+    app.patch("/reject-tuition/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: "rejected",
+        },
+      };
+      const result = await tuitionsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
 
