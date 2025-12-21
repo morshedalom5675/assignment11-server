@@ -40,8 +40,20 @@ async function run() {
       const email = req.query.email;
       const query = {};
       if (email) {
+        query.studentEmail = email;
+      }
+      const result = await applicationsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
+    app.get("/ongoing-application", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
         query.tutorEmail = email;
       }
+      // console.log(query)
       const result = await applicationsCollection.find(query).toArray();
       res.send(result);
     });
@@ -51,7 +63,7 @@ async function run() {
       const result = await applicationsCollection
         .find()
         .limit(6)
-        .sort({ date: -1 })
+        .sort({ appliedAt: -1 })
         .toArray();
       res.send(result);
     });
@@ -95,7 +107,7 @@ async function run() {
       const result = await tuitionsCollection
         .find()
         .limit(6)
-        .sort({ date: -1 })
+        .sort({ createdAt: -1 })
         .toArray();
       res.send(result);
     });
