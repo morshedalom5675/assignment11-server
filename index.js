@@ -8,7 +8,13 @@ const port = process.env.PORT || 3000;
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [process.env.CLIENT_URL],
+    credentials: true,
+    optionSuccessStatus: 200,
+  })
+);
 app.use(express.json());
 
 const uri = process.env.mongoDB_URI;
@@ -109,18 +115,18 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/edit-tuitionPost/:id', async(req, res) => {
-      const id = req.params.id
-      const query = {_id: new ObjectId(id)}
-      const data = req.body
+    app.patch("/edit-tuitionPost/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const data = req.body;
       const updatedDoc = {
         $set: {
-          ...data
-        }
-      }
-      const result = await tuitionsCollection.updateOne(query,updatedDoc)
-      res.send(result)
-    })
+          ...data,
+        },
+      };
+      const result = await tuitionsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
 
     app.patch("/approved-tuition/:id", async (req, res) => {
       const id = req.params.id;
@@ -302,7 +308,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
